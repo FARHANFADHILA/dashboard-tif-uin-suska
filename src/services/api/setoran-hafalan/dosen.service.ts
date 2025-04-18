@@ -6,14 +6,14 @@ interface DataSetoran {
 }
 const getDataMyMahasiswa = async () => {
   const axios = api();
-  const response = await axios.get(`dosen/pa-saya`);
+  const response = await axios.get(`imemoraise/v1/dosen/pa-saya`);
   const data = response.data;
   return data;
 };
 
 const getDataMahasiswaByEmail = async (email: string) => {
   const axios = api();
-  const response = await axios.get(`mahasiswa/setoran/${email}`);
+  const response = await axios.get(`imemoraise/v1/mahasiswa/setoran/${email}`);
   const data = response.data;
   return data;
 };
@@ -28,7 +28,7 @@ const postSetoranSurah = async ({
   tgl_setoran: string;
 }) => {
   const axios = api();
-  const request = await axios.post(`/dosen/setor`, {
+  const request = await axios.post(`imemoraise/v1/dosen/setor`, {
     nim,
     data_setoran,
     tgl_setoran,

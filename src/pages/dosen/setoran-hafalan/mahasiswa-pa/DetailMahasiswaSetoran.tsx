@@ -24,22 +24,18 @@ import {
   Activity,
   Calendar,
   ChartSpline,
+  Divide,
   FileDigit,
   Rocket,
   SaveAll,
+  Trash,
   User,
 } from "lucide-react";
 import ProgressStatistik from "@/components/mahasiswa/setoran-hafalan/detail-riwayat/ProgressStatistik";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import ModalBoxLogs from "@/components/dosen/setoran-hafalan/ModalBoxLogs";
+import ModalBoxValidasiSetoran from "@/components/dosen/setoran-hafalan/ModalBoxValidasiSetoran";
 // import LoadingComponent from "@/components/globals/loading";
 
 interface Dosen {
@@ -87,6 +83,7 @@ function DetailMahasiswaSetoran() {
   const { dataCurrent, setTabState, tabState, setSearch } =
     useFilteringSetoranSurat(dataInfoSetoran?.setoran.detail, "default");
 
+  // console.log(dataCurrent);
   // post data Setoran with mutation
   const mutationAccept = useMutation({
     mutationFn: apiSetoran.postSetoranSurah,
@@ -95,14 +92,13 @@ function DetailMahasiswaSetoran() {
   const mutationDelete = useMutation({
     mutationFn: apiSetoran.pembatalanSetoranSurah,
   });
-  // const [buttonLoading, setButtonLoading] = useState(true);
+  const [buttonLoading, setButtonLoading] = useState(false);
   const [tempDataCheck, setTempDataCheck] = useState<CheckedData[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [aksi, setAksi] = useState<string>("");
-  // console.log(aksi);
-  // console.log(JSON.stringify(tempDataCheck));
+  const [aksi, setAksi] = useState<"validasi" | "batalkan" | null>("validasi");
 
+  const [modeSunting, setModeSunting] = useState(false);
   const handleSelectAll = (checked: boolean) => {
     setSelectAll(checked);
 
@@ -121,16 +117,18 @@ function DetailMahasiswaSetoran() {
       setTempDataCheck([]);
     }
   };
-  const handleAksi = async () => {
+  const handleAksi = async (tgl_setoran: string) => {
     switch (aksi) {
       case "validasi":
-        setLoading(true);
+        // setLoading(true);
         try {
           // Filter item yang id_surah-nya kosong, lalu lakukan mutatio
-          const dataAcc = tempDataCheck.map((item) => ({
-            nama_surah: item.nama_surah,
-            nomor_surah: item.nomor_surah,
-          }));
+          const dataAcc = tempDataCheck
+            .filter((item) => item.id_surah === "")
+            .map((item) => ({
+              nama_surah: item.nama_surah,
+              nomor_surah: item.nomor_surah,
+            }));
 
           if (dataAcc.length === 0) {
             setLoading(false);
@@ -140,33 +138,35 @@ function DetailMahasiswaSetoran() {
               className: "dark:bg-blue-500 bg-blue-300",
             });
           }
-          await mutationAccept
-            .mutateAsync({
-              nim: dataInfoSetoran?.info.nim,
-              data_setoran: dataAcc,
-              tgl_setoran: new Date().toISOString().split("T")[0],
-            })
-            .then((data) => {
-              console.log(data);
-              if (data.response) {
-                queryclient.invalidateQueries({
-                  queryKey: ["info-mahasiswa-by-email"],
-                });
+          console.log(dataAcc);
+          console.log(tgl_setoran);
+          // await mutationAccept
+          //   .mutateAsync({
+          //     nim: dataInfoSetoran?.info.nim,
+          //     data_setoran: dataAcc,
+          //     tgl_setoran: new Date().toISOString().split("T")[0],
+          //   })
+          //   .then((data) => {
+          //     console.log(data);
+          //     if (data.response) {
+          //       queryclient.invalidateQueries({
+          //         queryKey: ["info-mahasiswa-by-email"],
+          //       });
 
-                setTempDataCheck([]);
-                setSelectAll(false);
-                toast({
-                  title: "✨ Sukses",
-                  description: "Validasi Setoran Surah Berhasil",
-                  className: "dark:bg-green-600 bg-green-300",
-                });
+          //       setTempDataCheck([]);
+          //       setSelectAll(false);
+          //       toast({
+          //         title: "✨ Sukses",
+          //         description: "Validasi Setoran Surah Berhasil",
+          //         className: "dark:bg-green-600 bg-green-300",
+          //       });
 
-                setLoading(false);
-                console.log("Sukses");
-              }
-            });
+          //       setLoading(false);
+          //       console.log("Sukses");
+          //     }
+          //   });
 
-          // console.log("Sukses");
+          console.log("Sukses");
         } catch (error) {
           toast({
             title: "❌ Error",
@@ -241,13 +241,18 @@ function DetailMahasiswaSetoran() {
   const handleCheckBoxToTempData = (
     checked: boolean,
     nama_surah: string,
-    nomor_surah: number
+    nomor_surah: number,
+    id_surah?: string
   ) => {
     if (checked) {
       // Tambahkan data baru ke array
       setTempDataCheck((prevData) => [
         ...prevData,
-        { nama_surah: nama_surah, nomor_surah: nomor_surah },
+        {
+          nama_surah: nama_surah,
+          nomor_surah: nomor_surah,
+          id_surah: id_surah,
+        },
       ]);
     } else {
       // Hapus data yang sesuai dari array
@@ -260,7 +265,21 @@ function DetailMahasiswaSetoran() {
     }
   };
 
-  // const [openModalValidasiSetoran, setModalValidasiSetoran] = useState(false);
+  const tempDataToString = () => {
+    if (aksi === "validasi") {
+      const tempData = tempDataCheck
+        .filter((item) => item.id_surah === "")
+        .map((item) => item.nama_surah);
+      return tempData.join(", ");
+    } else {
+      const tempData = tempDataCheck
+        .filter((item) => item.id_surah !== "")
+        .map((item) => item.nama_surah);
+      return tempData.join(", ");
+    }
+  };
+
+  const [openModalValidasiSetoran, setModalValidasiSetoran] = useState(false);
   // const [openModalBatalkanSetoran, setModalBatalkanSetoran] = useState(false);
   const [openModalStatistik, setModalStatistik] = useState(false);
   const [openModalLogs, setModalLogs] = useState(false);
@@ -287,23 +306,19 @@ function DetailMahasiswaSetoran() {
           setModalBatalkanSetoran(false);
         }}
       /> */}
-      {/* <ModalBoxDosen
+      <ModalBoxValidasiSetoran
         openDialog={openModalValidasiSetoran}
         buttonLoading={buttonLoading}
         validasiSetoran={(dateSetoran: string) => {
           setButtonLoading(true);
-          mutation.mutate({
-            nim: dataInfoSetoran?.info.nim,
-            nomor_surah: detailSurah.nomor,
-            tgl_setoran: dateSetoran,
-          });
+          handleAksi(dateSetoran);
         }}
         info={dataInfoSetoran?.info}
-        detail={detailSurah}
+        nama_surah={tempDataToString()}
         onClose={(bool) => {
           setModalValidasiSetoran(bool);
         }}
-      /> */}
+      />
 
       <div className="flex flex-col gap-4">
         {/* judul */}
@@ -443,7 +458,7 @@ function DetailMahasiswaSetoran() {
               Lihat Logs
             </Button>
 
-            <Select
+            {/* <Select
               value={aksi} // Pastikan jika null, tetap bisa reset ke placeholder
               onValueChange={(e) => {
                 setAksi(e);
@@ -456,14 +471,25 @@ function DetailMahasiswaSetoran() {
                 <SelectItem value="validasi">Validasi</SelectItem>
                 <SelectItem value="batalkan">Batalkan</SelectItem>
               </SelectContent>
-            </Select>
+            </Select> */}
+
+            <Button
+              variant={"default"}
+              className="bg-gray-400 hover:scale-[106%] text-white hover:bg-red-700 active:scale-95 flex justify-center items-center gap-1.5"
+              onClick={() => {
+                setModeSunting(!modeSunting);
+              }}
+            >
+              Sunting
+            </Button>
             <Button
               variant={"default"}
               className="bg-green-500 hover:scale-[106%] text-white hover:bg-green-700 active:scale-95 flex justify-center items-center gap-1.5"
-              // disabled={tempDataCheck.length === 0 || isLoading}
+              disabled={tempDataCheck.length === 0 || isLoading}
               onClick={() => {
+                setModalValidasiSetoran(true);
                 handleAksi();
-                console.log(tempDataCheck);
+                // console.log(tempDataCheck);
                 // setLoading(true);
                 // try {
                 //   // Filter item yang id_surah-nya kosong, lalu lakukan mutatio
@@ -591,8 +617,7 @@ function DetailMahasiswaSetoran() {
                 <TableHead className="text-center">
                   Dosen Yang Mengesahkan
                 </TableHead>
-                <TableHead className="text-center">Status</TableHead>
-                <TableHead className="">
+                <TableHead className="flex justify-center items-center">
                   <Checkbox
                     className="data-[state=checked]:bg-green-500"
                     checked={selectAll}
@@ -614,7 +639,7 @@ function DetailMahasiswaSetoran() {
                 </TableRow>
               )}
               {isLoading && (
-                <TableRow>
+                <TableRow className="">
                   <TableCell colSpan={6}>
                     <div className="flex flex-col gap-2">
                       <Skeleton className="h-8 w-full" />
@@ -672,30 +697,64 @@ function DetailMahasiswaSetoran() {
                       {surah.sudah_setor ? surah.setoran[0].dosen.nama : "-"}
                     </TableCell>
 
-                    <TableCell className="text-center">
-                      {surah.sudah_setor ? (
-                        <div>sudah setor</div>
-                      ) : (
-                        <div>-</div>
-                      )}
-                    </TableCell>
                     <TableCell className="">
-                      <Checkbox
-                        className="data-[state=checked]:bg-green-500"
-                        checked={
-                          selectAll ||
-                          tempDataCheck.some(
-                            (item) => item.nomor_surah === surah.nomor
-                          )
-                        }
-                        onCheckedChange={(checked) =>
-                          handleCheckBoxToTempData(
-                            Boolean(checked),
-                            surah.nama,
-                            surah.nomor
-                          )
-                        }
-                      />
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="flex items-center justify-center">
+                          {modeSunting ? (
+                            <div className="">
+                              <Checkbox
+                                className="data-[state=checked]:bg-green-500 "
+                                // checked={
+                                //   selectAll ||
+                                //   tempDataCheck.some(
+                                //     (item) => item.nomor_surah === surah.nomor
+                                //   )
+                                // }
+                                defaultChecked={surah.sudah_setor}
+                                onCheckedChange={(checked) => {
+                                  handleCheckBoxToTempData(
+                                    Boolean(checked),
+                                    surah.nama,
+                                    surah.nomor,
+                                    surah.setoran[0]?.id || ""
+                                  );
+                                }}
+                              />
+                            </div>
+                          ) : surah.sudah_setor ? (
+                            <div className="flex gap-2">
+                              <div className="flex gap-1.5 opacity-50 text-sm">
+                                <div>✅</div>
+                                <div>Sudah</div>
+                              </div>
+                              <div className="cursor-pointer hover:scale-110 transition-all duration-200 ease-in-out active:scale-100">
+                                <Trash size={20} className="stroke-red-600" />
+                              </div>
+                            </div>
+                          ) : (
+                            <Checkbox
+                              className="data-[state=checked]:bg-green-500 flex items-center justify-center"
+                              checked={
+                                selectAll ||
+                                tempDataCheck.some(
+                                  (item) => item.nomor_surah === surah.nomor
+                                )
+                              }
+                              onCheckedChange={(checked) => {
+                                handleCheckBoxToTempData(
+                                  Boolean(checked),
+                                  surah.nama,
+                                  surah.nomor,
+                                  surah.setoran[0]?.id || ""
+                                );
+
+                                console.log("checked", checked);
+                                console.log("surah", surah.nama);
+                              }}
+                            />
+                          )}
+                        </div>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))

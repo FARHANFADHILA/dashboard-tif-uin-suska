@@ -18,6 +18,7 @@ export default function MahasiswaSetoranHafalanStatistikPage() {
       apiSetoran.getDataMysetoran().then((data) => data.data.setoran.ringkasan),
     staleTime: Infinity,
   });
+  console.log(dataRingkasan, "dataRingkasan");
   return (
     <DashboardLayout>
       <div className="flex flex-col gap-1.5">
