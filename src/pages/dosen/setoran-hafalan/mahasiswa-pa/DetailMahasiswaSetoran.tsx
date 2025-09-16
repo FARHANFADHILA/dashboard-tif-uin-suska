@@ -508,14 +508,11 @@ function DetailMahasiswaSetoran() {
                           title="Cetak Kartu Muroja'ah"
                           className="absolute top-4 right-4 z-20 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-blue-200 dark:border-blue-700/50 text-blue-600 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/50 !p-2.5"
                         >
-                          {isLoadingCetakKartuMurojaah ? (
+                          {isLoadingCetakKartuMurojaah && (
                             <Loader2 className="animate-spin" size={18} />
-                          ) : (
-                            <>
-                              <Download size={18} />
-                              <span>Cetak Kartu Muroja'ah</span>
-                            </>
                           )}
+                          <Download size={18} />
+                          <span>Cetak Kartu Muroja'ah</span>
                         </Button>
                       </div>
                     </div>
