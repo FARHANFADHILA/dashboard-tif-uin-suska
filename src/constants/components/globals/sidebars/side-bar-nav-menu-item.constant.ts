@@ -134,4 +134,17 @@ export const SideBarNavMenuItems: SideBarNavMenuItemsProps = {
       ],
     },
   ],
+  "wakil-dekan-3": [
+    {
+      label : "Muroja'ah",
+      menus : [
+        {
+          title : "Teknik Informatika",
+          url : "/wakil-dekan-3/dashboard/setoran-hafalan",
+          icon : GraduationCapIcon,
+        }
+      ]
+    }
+
+  ],
 };
